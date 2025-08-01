@@ -59,7 +59,7 @@ function pr() {
   pr_url="${github_url}/compare/${main_branch}...${branch_name}"
 
   if grep -qi microsoft /proc/version; then
-    explorer.exe "$pr_url"
+    /mnt/c/Program\ Files/Google/Chrome/Application/chrome.exe "$pr_url"
   else
     uname=$(uname)
     open_or_start='open'
