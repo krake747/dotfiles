@@ -18,15 +18,17 @@ alias gl="git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %
 alias gsu="git stash -u"
 alias gsp="git stash pop"
 alias gss='git stash push -u -m'
+alias gfap="git fetch --all --prune"
+alias gfapr='gfap && gpr'
 
 # ─── GIT FUNCTIONS ─────────────────────────────
 function gc() {
-  git commit -m \"$1\"
+  git commit -m "$1"
 }
 
 function gdelbr() {
   main_branch=$(gdefault)
-  gco $main_branch && git branch | grep -v \"$main_branch\" | xargs git branch -D
+  gco $main_branch && git branch | grep -v "$main_branch" | xargs git branch -D
 }
 
 function gcopm() {
@@ -35,33 +37,33 @@ function gcopm() {
 }
 
 function gstnewbr() {
-  git stash -u && gnewbr \"$1\" && gsp
+  git stash -u && gnewbr "$1" && gsp
 }
 
 function gcpp() {
-  gas && gc \"$1\" && gpr && gpo
+  gas && gc "$1" && gpr && gpo
 }
 
 function gcp() {
-  gas && gc \"$1\" && gpo
+  gas && gc "$1" && gpo
 }
 
 function gcpr() {
-  gcp \"$1\" && pr
+  gcp "$1" && pr
 }
 
 function pr() {
   github_url=$(git remote get-url origin | sed -Ee 's#(git@|git://)#https://#;s@:|\\.git##g' | sed 's#github.com/#github.com/#')
   branch_name=$(git symbolic-ref --short HEAD)
   main_branch=$(gdefault)
-  pr_url=\"${github_url}/compare/${main_branch}...${branch_name}\"
+  pr_url="${github_url}/compare/${main_branch}...${branch_name}"
 
   if grep -qi microsoft /proc/version; then
-    explorer.exe \"$pr_url\"
+    explorer.exe "$pr_url"
   else
     uname=$(uname)
     open_or_start='open'
-    [[ \"$uname\" =~ CYGWIN|MINGW|MSYS ]] && open_or_start='start'
-    $open_or_start \"$pr_url\"
+    [[ "$uname" =~ CYGWIN|MINGW|MSYS ]] && open_or_start='start'
+    $open_or_start "$pr_url"
   fi
 }
