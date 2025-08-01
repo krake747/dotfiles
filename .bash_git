@@ -53,7 +53,7 @@ function gcpr() {
 }
 
 function pr() {
-  github_url=$(git remote get-url origin | sed -Ee 's#(git@|git://)#https://#;s@:|\\.git##g' | sed 's#github.com/#github.com/#')
+  github_url=$(git remote get-url origin | sed -E 's#(git@|git://)#https://#' | sed -E 's#:#/#' | sed -E 's#\.git$##')
   branch_name=$(git symbolic-ref --short HEAD)
   main_branch=$(gdefault)
   pr_url="${github_url}/compare/${main_branch}...${branch_name}"
