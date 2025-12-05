@@ -1,6 +1,8 @@
 # ─── GENERAL ALIASES ─────────────────────────────
 alias reload="source ~/.bashrc"
 alias bashrc="code ~/.bashrc"
+alias bashrcgit="code ~/.bash_git"
+alias bashaliases="code ~/.bash_aliases"
 
 # dotnet
 alias dn="dotnet"

@@ -2,7 +2,6 @@
 unalias gc 2>/dev/null
 unalias gcp 2>/dev/null
 
-alias gdefault="git symbolic-ref refs/remotes/origin/HEAD | cut -d'/' -f4"
 alias gas="git add -A && git status"
 alias gs="git status"
 alias grh="git reset HEAD~"
@@ -26,9 +25,41 @@ function gc() {
   git commit -m "$1"
 }
 
-function gdelbr() {
-  main_branch=$(gdefault)
-  gco $main_branch && git branch | grep -v "$main_branch" | xargs git branch -D
+gdefault() {
+  # Try remote HEAD branch from remote show
+  if branch=$(git remote show origin 2>/dev/null | sed -n '/HEAD branch/s/.*: //p'); then
+    if [ -n "$branch" ]; then
+      echo "$branch"
+      return 0
+    fi
+  fi
+
+  # Fallback: check local main/master
+  if git show-ref --verify --quiet refs/heads/main; then
+    echo "main"
+  elif git show-ref --verify --quiet refs/heads/master; then
+    echo "master"
+  else
+    echo ""
+  fi
+}
+
+gdelbr() {
+  main_branch="$(gdefault)"
+  if [ -z "$main_branch" ]; then
+    echo "Could not determine default branch."
+    return 1
+  fi
+
+  git checkout "$main_branch" || return 1
+
+  branches=$(git branch --format="%(refname:short)" | grep -Fxv "$main_branch")
+
+  if [ -n "$branches" ]; then
+    echo "$branches" | xargs -n 1 git branch -D
+  else
+    echo "No other branches to delete."
+  fi
 }
 
 function gcopm() {
