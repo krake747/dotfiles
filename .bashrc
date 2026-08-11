@@ -4,6 +4,9 @@ case $- in
     *) return;;
 esac
 
+### ─── PROMPT ─────────────────────────────
+export PS1='\w\$ '
+
 ### ─── ENVIRONMENT ─────────────────────────────
 # mise (language/version manager, incl. Go)
 [ -f /usr/bin/mise ] && eval "$(/usr/bin/mise activate bash)"
