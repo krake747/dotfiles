@@ -4,36 +4,114 @@ case $- in
     *) return;;
 esac
 
-### ─── OH MY BASH ─────────────────────────────
-export OSH="$HOME/.oh-my-bash"
-OSH_THEME="ht"
-OMB_USE_SUDO=true
-completions=(git composer ssh)
-aliases=(general)
-plugins=(git bashmarks)
-source "$OSH/oh-my-bash.sh"
-
-### ─── LOAD CUSTOM FILES ─────────────────────────────
-[ -f ~/.bash_git ] && source ~/.bash_git
-[ -f ~/.bash_aliases ] && source ~/.bash_aliases
-
 ### ─── ENVIRONMENT ─────────────────────────────
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+# mise (language/version manager, incl. Go)
+[ -f /usr/bin/mise ] && eval "$(/usr/bin/mise activate bash)"
 
-export PNPM_HOME="$HOME/.local/share/pnpm"
-[[ ":$PATH:" != *":$PNPM_HOME:"* ]] && export PATH="$PNPM_HOME:$PATH"
+# vite-plus (Node.js + pnpm manager)
+[ -f ~/.vite-plus/env ] && . ~/.vite-plus/env
 
-export PATH="$PATH:/usr/local/go/bin:/opt/nvim/bin:/opt/nvim/usr/bin"
-export ZED_ALLOW_EMULATED_GPU=1
-alias zed="WAYLAND_DISPLAY= zed"
+# Go / dotnet / opencode
+export PATH="$PATH:/usr/local/go/bin:$HOME/.dotnet:$HOME/.dotnet/tools:$HOME/.opencode/bin"
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# ─── GIT ALIASES ─────────────────────────────
+unalias gc 2>/dev/null
+unalias gcp 2>/dev/null
 
-# opencode
-export PATH=/home/krake/.opencode/bin:$PATH
+alias gas="git add -A && git status"
+alias gs="git status"
+alias grh="git reset HEAD~"
+alias grhh="git reset HEAD --hard"
+alias gco="git checkout"
+alias gnewbr="gcopm && git checkout -b"
+alias gpr="git pull -r && git --no-pager log -15 --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)[%an]%Creset' --abbrev-commit"
+alias gpo="git push -u origin HEAD"
+alias gac="gas && git commit -m"
+alias gca="git commit --amend --no-edit"
+alias gcaf="gca && git push --force-with-lease"
+alias gl="git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
+alias gsu="git stash -u"
+alias gsp="git stash pop"
+alias gss='git stash push -u -m'
+alias gfap="git fetch --all --prune"
+alias gfapr='gfap && gpr'
 
-# dotnet
-export DOTNET_ROOT=$HOME/.dotnet
-export PATH=$PATH:$HOME/.dotnet:$HOME/.dotnet/tools
+# ─── GIT FUNCTIONS ─────────────────────────────
+function gc() {
+  git commit -m "$1"
+}
+
+gdefault() {
+  # Try remote HEAD branch from remote show
+  if branch=$(git remote show origin 2>/dev/null | sed -n '/HEAD branch/s/.*: //p'); then
+    if [ -n "$branch" ]; then
+      echo "$branch"
+      return 0
+    fi
+  fi
+
+  # Fallback: check local main/master
+  if git show-ref --verify --quiet refs/heads/main; then
+    echo "main"
+  elif git show-ref --verify --quiet refs/heads/master; then
+    echo "master"
+  else
+    echo ""
+  fi
+}
+
+gdelbr() {
+  main_branch="$(gdefault)"
+  if [ -z "$main_branch" ]; then
+    echo "Could not determine default branch."
+    return 1
+  fi
+
+  git checkout "$main_branch" || return 1
+
+  branches=$(git branch --format="%(refname:short)" | grep -Fxv "$main_branch")
+
+  if [ -n "$branches" ]; then
+    echo "$branches" | xargs -n 1 git branch -D
+  else
+    echo "No other branches to delete."
+  fi
+}
+
+function gcopm() {
+  main_branch=$(gdefault)
+  gco $main_branch && gpr
+}
+
+function gstnewbr() {
+  git stash -u && gnewbr "$1" && gsp
+}
+
+function gcpp() {
+  gas && gc "$1" && gpr && gpo
+}
+
+function gcp() {
+  gas && gc "$1" && gpo
+}
+
+function gcpr() {
+  gcp "$1" && pr
+}
+
+function pr() {
+  github_url=`git remote -v | awk '/fetch/{print $2}' | sed -Ee 's#(git@|git://)#https://#' -e 's@cloud:@cloud/@' -e 's@com:@com/@' -e 's%\.git$%%' | awk '/github/'`
+  [ -z "$github_url" ] && return 1
+  branch_name=`git symbolic-ref HEAD | cut -d"/" -f 3,4`
+  main_branch=`gdefault`
+  pr_url="$github_url/compare/$main_branch...$branch_name"
+
+  if grep -qi microsoft /proc/version; then
+    /mnt/c/Program\ Files/Google/Chrome/Application/chrome.exe "$pr_url"
+  else
+    case "$(uname)" in
+      CYGWIN*|MINGW*|MSYS*) start "$pr_url" ;;
+      *) xdg-open "$pr_url" >/dev/null 2>&1 || open "$pr_url" ;;
+    esac
+  fi
+}
