@@ -11,19 +11,17 @@ esac
 # vite-plus (Node.js + pnpm manager)
 [ -f ~/.vite-plus/env ] && . ~/.vite-plus/env
 
-# Go / dotnet / opencode
-export PATH="$PATH:/usr/local/go/bin:$HOME/.dotnet:$HOME/.dotnet/tools:$HOME/.opencode/bin"
-
 # ─── GIT ALIASES ─────────────────────────────
 unalias gc 2>/dev/null
-unalias gcp 2>/dev/null
+
+# gnewbr used to be an alias; now it's a function below
+unalias gnewbr 2>/dev/null
 
 alias gas="git add -A && git status"
 alias gs="git status"
 alias grh="git reset HEAD~"
 alias grhh="git reset HEAD --hard"
 alias gco="git checkout"
-alias gnewbr="gcopm && git checkout -b"
 alias gpr="git pull -r && git --no-pager log -15 --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)[%an]%Creset' --abbrev-commit"
 alias gpo="git push -u origin HEAD"
 alias gac="gas && git commit -m"
@@ -43,11 +41,10 @@ function gc() {
 
 gdefault() {
   # Try remote HEAD branch from remote show
-  if branch=$(git remote show origin 2>/dev/null | sed -n '/HEAD branch/s/.*: //p'); then
-    if [ -n "$branch" ]; then
-      echo "$branch"
-      return 0
-    fi
+  branch=$(git remote show origin 2>/dev/null | sed -n '/HEAD branch/s/.*: //p')
+  if [ -n "$branch" ]; then
+    echo "$branch"
+    return 0
   fi
 
   # Fallback: check local main/master
@@ -81,6 +78,10 @@ gdelbr() {
 function gcopm() {
   main_branch=$(gdefault)
   gco $main_branch && gpr
+}
+
+function gnewbr() {
+  gcopm && git checkout -b "$1"
 }
 
 function gstnewbr() {
