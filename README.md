@@ -6,7 +6,10 @@ Generic, machine-agnostic shell configuration. Safe to use at work and at home.
 
 - `.bashrc` — minimal bash for the interactive shell:
   - Environment hooks for `mise` and `vite-plus`
-  - Git aliases + helper functions (including `pr` to open a GitHub PR)
+  - Sources `bashrc.d/git.sh`
+- `bashrc.d/git.sh` — git aliases + helper functions (including `pr` to open a
+  GitHub PR). Kept in its own file so it can be sourced on machines that have
+  their own `.bashrc` (e.g. Omarchy) without clobbering it.
 - `.bash_profile` — login shell setup:
   - Sources `.bashrc`
   - Exports PATH once for Go, dotnet, and opencode
@@ -25,8 +28,13 @@ ln -sf ~/dotfiles/.bash_profile ~/.bash_profile
 > sources no login setup on its own. If your login shell doesn't pick up `.bashrc`
 > automatically, have `.bash_profile` source it (this repo's version already does).
 
-Or, on my Fedora machines, this is handled automatically by the
-[`fedora`](https://github.com/krake747/fedora) provisioning playbook.
+On a machine that already has its own `.bashrc` (e.g. Omarchy), don't symlink
+over it — just source the shared git file from it:
+
+```bash
+source ~/dotfiles/bashrc.d/git.sh
+```
+
 Any machine-specific config (e.g. git identity) lives in that personal repo,
 not here.
 
